@@ -6,26 +6,60 @@
 <meta name="theme-color" content="#122b43">
 <title>NFL Survivor Online</title>
 <style>
-:root{--bg:#eef2f5;--card:#fff;--text:#17212b;--muted:#667582;--line:#d8e1e7;--navy:#122b43;--navy2:#1b3a57;--soft:#edf2f5;--input:#fff;--ok:#067647;--bad:#b42318;--shadow:#00000010}
+:root{--bg:#eef2f5;--card:#fff;--text:#17212b;--muted:#667582;--line:#d8e1e7;--navy:#122b43;--navy2:#1b3a57;--soft:#edf2f5;--input:#fff;--ok:#067647;--bad:#b42318;--shadow:#00000010;--focus:#5db5ff}
 html[data-theme="dark"]{--bg:#0f151b;--card:#182129;--text:#eef4f8;--muted:#aebbc5;--line:#33414b;--navy:#0d2236;--navy2:#153553;--soft:#26333d;--input:#111a21;--ok:#59d39b;--bad:#ff9188;--shadow:#00000055}
 @media(prefers-color-scheme:dark){html:not([data-theme="light"]){--bg:#0f151b;--card:#182129;--text:#eef4f8;--muted:#aebbc5;--line:#33414b;--navy:#0d2236;--navy2:#153553;--soft:#26333d;--input:#111a21;--ok:#59d39b;--bad:#ff9188;--shadow:#00000055}}
-*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}button,select,input{font:inherit}
-header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:16px;box-shadow:0 2px 10px var(--shadow)}.wrap{max-width:980px;margin:auto}.head{display:flex;justify-content:space-between;gap:10px;align-items:center}
-main{max-width:980px;margin:auto;padding:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px var(--shadow)}h1{font-size:21px;margin:0}h2{font-size:17px;margin:0 0 12px}h3{font-size:15px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.full{grid-column:1/-1}label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
-input,select,button{width:100%;padding:11px;border-radius:9px}input,select{background:var(--input);color:var(--text);border:1px solid var(--line)}button{border:0;background:var(--navy);color:#fff;font-weight:700;cursor:pointer}
-button.secondary{background:var(--soft);color:var(--text);border:1px solid var(--line)}button.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}button:disabled{opacity:.45;cursor:not-allowed}
-.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:12px}.hidden{display:none!important}.notice{background:var(--soft);padding:10px;border-radius:9px;font-size:13px}.muted{color:var(--muted)}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
-table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:11px;color:var(--muted);text-transform:uppercase}
-.actions{display:flex;gap:5px;flex-wrap:wrap}.actions button{width:auto;padding:7px 9px;font-size:12px}
-#loginView{max-width:440px;margin:40px auto}.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:var(--soft);font-size:12px}
-@media(max-width:760px){.tabs{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.full{grid-column:auto}table{font-size:12px}.head{align-items:flex-start;flex-direction:column}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{min-width:320px;margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.45;-webkit-font-smoothing:antialiased}
+button,select,input{font:inherit}
+button,input,select{min-height:48px;width:100%;border-radius:11px}
+input,select{padding:11px 12px;background:var(--input);color:var(--text);border:1px solid var(--line);font-size:16px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+button{padding:11px 14px;border:0;background:var(--navy);color:#fff;font-weight:750;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button.secondary{background:var(--soft);color:var(--text);border:1px solid var(--line)}
+button.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+button:disabled{opacity:.45;cursor:not-allowed}
+header{position:sticky;z-index:20;top:0;padding:max(10px,env(safe-area-inset-top)) 12px 10px;background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;box-shadow:0 2px 10px var(--shadow)}
+.wrap{max-width:1100px;margin:auto}.head{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.brand{min-width:0}.brand h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.head .actions{flex-wrap:nowrap}.head .actions button{min-height:40px;width:auto;padding:8px 10px;white-space:nowrap;font-size:13px}
+main{max-width:1100px;margin:auto;padding:12px 12px calc(86px + env(safe-area-inset-bottom))}
+.card{overflow:hidden;margin-bottom:12px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:15px;box-shadow:0 2px 10px var(--shadow)}
+h1{margin:0;font-size:clamp(18px,5vw,23px);line-height:1.15}h2{margin:0 0 13px;font-size:18px}h3{margin:16px 0 7px;font-size:15px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.full{grid-column:auto}
+label{display:block;margin-bottom:5px;color:var(--muted);font-size:13px;font-weight:650}
+.tabs{position:fixed;z-index:30;right:0;bottom:0;left:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;margin:0;padding:7px 5px max(7px,env(safe-area-inset-bottom));background:color-mix(in srgb,var(--card) 94%,transparent);border-top:1px solid var(--line);box-shadow:0 -4px 18px var(--shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.tabs button{min-height:48px;padding:6px 2px;background:transparent;color:var(--muted);border:0;border-radius:9px;font-size:clamp(9px,2.6vw,12px);line-height:1.1}
+.tabs button:not(.secondary){background:var(--navy);color:#fff}.tabs button.secondary{border:0}
+.hidden{display:none!important}.notice{padding:11px 12px;background:var(--soft);border-radius:10px;font-size:13px}.muted{color:var(--muted)}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
+.table-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--muted);font-size:11px;text-transform:uppercase}
+.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{flex:1 1 auto;min-height:42px;width:auto;padding:8px 10px;font-size:12px}
+#loginView{max-width:440px;margin:16px auto}.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:var(--soft);font-size:12px}
+@media(max-width:640px){
+  .head{align-items:center}.head #subtitle{max-width:48vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  table.mobile-cards,table.mobile-cards tbody,table.mobile-cards tr,table.mobile-cards td{display:block;width:100%}
+  table.mobile-cards thead,table.mobile-cards tr:first-child{display:none}
+  table.mobile-cards tr{margin:0 0 10px;padding:8px 10px;background:var(--soft);border:1px solid var(--line);border-radius:12px}
+  table.mobile-cards td{display:grid;grid-template-columns:minmax(82px,34%) minmax(0,1fr);gap:10px;padding:7px 0;border:0;overflow-wrap:anywhere}
+  table.mobile-cards td::before{content:attr(data-label);color:var(--muted);font-size:11px;font-weight:750;text-transform:uppercase}
+  table.mobile-cards td .actions{grid-column:1/-1}.actions button{min-height:44px}
+}
+@media(min-width:641px){
+  main{padding:18px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{grid-column:1/-1}
+  .tabs{position:static;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin-bottom:14px;padding:0;background:transparent;border:0;box-shadow:none;backdrop-filter:none}
+  .tabs button{min-height:46px;padding:9px;font-size:13px}.tabs button.secondary{border:1px solid var(--line)}
+  #loginView{margin:34px auto}
+}
+@media(min-width:900px){.card{padding:18px}main{padding:22px}.head .actions button{min-height:42px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 </style>
 </head>
 <body>
 <header><div class="wrap head">
-<div><h1>NFL Survivor Online</h1><div id="subtitle" style="font-size:12px;opacity:.8">Base de datos compartida</div></div>
-<div class="actions"><button class="secondary" id="themeBtn">Modo oscuro</button><button class="secondary hidden" id="logoutBtn">Salir</button></div>
+<div class="brand"><h1>NFL Survivor Online</h1><div id="subtitle" style="font-size:12px;opacity:.8">Base de datos compartida</div></div>
+<div class="actions"><button type="button" class="secondary" id="themeBtn" aria-label="Cambiar tema">Modo oscuro</button><button type="button" class="secondary hidden" id="logoutBtn">Salir</button></div>
 </div></header>
 
 <main>
@@ -51,14 +85,14 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
 </section>
 
 <section id="appView" class="hidden">
-<div class="tabs">
-<button data-tab="pick">Elegir</button>
-<button data-tab="results" class="secondary">Resultados</button>
-<button data-tab="standings" class="secondary">Clasificación</button>
-<button data-tab="playoffs" class="secondary">Playoffs</button>
-<button data-tab="history" class="secondary">Historial</button>
-<button data-tab="account" class="secondary">Cuenta</button>
-</div>
+<nav class="tabs" aria-label="Navegación principal">
+<button type="button" data-tab="pick" aria-current="page">Elegir</button>
+<button type="button" data-tab="results" class="secondary">Resultados</button>
+<button type="button" data-tab="standings" class="secondary">Clasificación</button>
+<button type="button" data-tab="playoffs" class="secondary">Playoffs</button>
+<button type="button" data-tab="history" class="secondary">Historial</button>
+<button type="button" data-tab="account" class="secondary">Cuenta</button>
+</nav>
 
 <section id="pick">
 <div class="card"><h2>Nueva elección</h2>
@@ -140,7 +174,11 @@ function alertError(e){console.error(e);alert(e?.message||String(e))}
 function openTab(name){
   const ids=["pick","results","standings","playoffs","history","account"];
   ids.forEach(id=>$(id).classList.toggle("hidden",id!==name));
-  document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("secondary",b.dataset.tab!==name));
+  document.querySelectorAll("[data-tab]").forEach(b=>{
+    const active=b.dataset.tab===name;
+    b.classList.toggle("secondary",!active);
+    if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
+  });
   window.scrollTo(0,0);
 }
 
@@ -243,10 +281,21 @@ function poScore(uid){
 function renderAll(){
   $("subtitle").textContent=`${currentSeason?.name||""} · ${profile.display_name}`;
   $("accountInfo").innerHTML=`<b>${esc(profile.display_name)}</b><br>${esc(session.user.email)}<br><span class="badge">${profile.role}</span>`;
-  renderLast();renderResults();renderStandings();renderHistory();renderBracket();
+  renderLast();renderResults();renderStandings();renderHistory();renderBracket();makeTablesResponsive();
   const lock=currentSeason.playoff_lock_at?new Date(currentSeason.playoff_lock_at):null;
   $("playoffLockInfo").textContent=lock?`Cierre del cuadro: ${lock.toLocaleString()}`:"El administrador aún no ha fijado hora de cierre.";
   $("saveBracketBtn").disabled=brackets.some(b=>b.user_id===session.user.id)||(lock&&Date.now()>=lock.getTime());
+}
+function makeTablesResponsive(){
+  document.querySelectorAll("table").forEach(table=>{
+    const headers=[...table.querySelectorAll("tr:first-child th")].map(th=>th.textContent.trim());
+    if(!headers.length)return;
+    table.classList.add("mobile-cards");
+    table.closest(".table-scroll")||table.parentElement?.classList.add("table-scroll");
+    [...table.querySelectorAll("tr")].slice(1).forEach(row=>{
+      [...row.children].forEach((cell,i)=>cell.dataset.label=headers[i]||"");
+    });
+  });
 }
 function renderLast(){
   const x=[...picks].filter(p=>p.user_id===session.user.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
