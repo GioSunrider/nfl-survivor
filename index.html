@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#122b43">
+<title>NFL Survivor Online</title>
+<style>
+:root{--bg:#eef2f5;--card:#fff;--text:#17212b;--muted:#667582;--line:#d8e1e7;--navy:#122b43;--navy2:#1b3a57;--soft:#edf2f5;--input:#fff;--ok:#067647;--bad:#b42318;--shadow:#00000010}
+html[data-theme="dark"]{--bg:#0f151b;--card:#182129;--text:#eef4f8;--muted:#aebbc5;--line:#33414b;--navy:#0d2236;--navy2:#153553;--soft:#26333d;--input:#111a21;--ok:#59d39b;--bad:#ff9188;--shadow:#00000055}
+@media(prefers-color-scheme:dark){html:not([data-theme="light"]){--bg:#0f151b;--card:#182129;--text:#eef4f8;--muted:#aebbc5;--line:#33414b;--navy:#0d2236;--navy2:#153553;--soft:#26333d;--input:#111a21;--ok:#59d39b;--bad:#ff9188;--shadow:#00000055}}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}button,select,input{font:inherit}
+header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:16px;box-shadow:0 2px 10px var(--shadow)}.wrap{max-width:980px;margin:auto}.head{display:flex;justify-content:space-between;gap:10px;align-items:center}
+main{max-width:980px;margin:auto;padding:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px var(--shadow)}h1{font-size:21px;margin:0}h2{font-size:17px;margin:0 0 12px}h3{font-size:15px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.full{grid-column:1/-1}label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+input,select,button{width:100%;padding:11px;border-radius:9px}input,select{background:var(--input);color:var(--text);border:1px solid var(--line)}button{border:0;background:var(--navy);color:#fff;font-weight:700;cursor:pointer}
+button.secondary{background:var(--soft);color:var(--text);border:1px solid var(--line)}button.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}button:disabled{opacity:.45;cursor:not-allowed}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:12px}.hidden{display:none!important}.notice{background:var(--soft);padding:10px;border-radius:9px;font-size:13px}.muted{color:var(--muted)}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:11px;color:var(--muted);text-transform:uppercase}
+.actions{display:flex;gap:5px;flex-wrap:wrap}.actions button{width:auto;padding:7px 9px;font-size:12px}
+#loginView{max-width:440px;margin:40px auto}.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:var(--soft);font-size:12px}
+@media(max-width:760px){.tabs{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.full{grid-column:auto}table{font-size:12px}.head{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header><div class="wrap head">
+<div><h1>NFL Survivor Online</h1><div id="subtitle" style="font-size:12px;opacity:.8">Base de datos compartida</div></div>
+<div class="actions"><button class="secondary" id="themeBtn">Modo oscuro</button><button class="secondary hidden" id="logoutBtn">Salir</button></div>
+</div></header>
+
+<main>
+<section id="loginView">
+<div class="card">
+<h2>Entrar</h2>
+<div class="grid">
+<div class="full"><label>Email</label><input id="loginEmail" type="email" autocomplete="email"></div>
+<div class="full"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
+<div class="full"><button id="loginBtn">Entrar</button></div>
+</div>
+</div>
+<div class="card">
+<h2>Crear cuenta</h2>
+<p class="muted">Cada jugador crea una cuenta una sola vez.</p>
+<div class="grid">
+<div class="full"><label>Nombre visible</label><input id="signupName"></div>
+<div class="full"><label>Email</label><input id="signupEmail" type="email"></div>
+<div class="full"><label>Contraseña</label><input id="signupPassword" type="password"></div>
+<div class="full"><button id="signupBtn">Crear cuenta</button></div>
+</div>
+</div>
+</section>
+
+<section id="appView" class="hidden">
+<div class="tabs">
+<button data-tab="pick">Elegir</button>
+<button data-tab="results" class="secondary">Resultados</button>
+<button data-tab="standings" class="secondary">Clasificación</button>
+<button data-tab="playoffs" class="secondary">Playoffs</button>
+<button data-tab="history" class="secondary">Historial</button>
+<button data-tab="account" class="secondary">Cuenta</button>
+</div>
+
+<section id="pick">
+<div class="card"><h2>Nueva elección</h2>
+<div class="grid">
+<div><label>Temporada</label><select id="seasonSelect"></select></div>
+<div><label>Jornada</label><select id="week"></select></div>
+<div class="full"><label>Equipo</label><select id="team"></select></div>
+<div class="full"><button id="savePickBtn">Registrar elección</button></div>
+</div>
+<p class="notice">Se guarda la hora del servidor al registrar la petición. La app no registra el kickoff; la norma de realizar la elección antes del partido sigue siendo responsabilidad de la liga.</p>
+</div>
+<div class="card"><h2>Mi última elección</h2><div id="lastPick" class="muted">Sin elecciones.</div><br><button id="waBtn">Compartir por WhatsApp</button></div>
+</section>
+
+<section id="results" class="hidden">
+<div class="card"><h2>Temporada regular</h2><div id="regularResults"></div></div>
+<div class="card"><h2>Playoffs</h2><div id="playoffResults"></div></div>
+</section>
+
+<section id="standings" class="hidden">
+<div class="card"><h2>Clasificación</h2><div id="standingsTable"></div></div>
+</section>
+
+<section id="playoffs" class="hidden">
+<div class="card"><h2>Cerrar cuadro completo</h2>
+<div id="playoffLockInfo" class="notice"></div><br>
+<div class="grid">
+<div class="full"><h3>Wild Card · 6 ganadores</h3></div>
+<div><label>Wild Card 1</label><select id="wc1"></select></div><div><label>Wild Card 2</label><select id="wc2"></select></div><div><label>Wild Card 3</label><select id="wc3"></select></div><div><label>Wild Card 4</label><select id="wc4"></select></div><div><label>Wild Card 5</label><select id="wc5"></select></div><div><label>Wild Card 6</label><select id="wc6"></select></div>
+<div class="full"><h3>Divisional · 4 ganadores</h3></div>
+<div><label>Divisional 1</label><select id="div1"></select></div><div><label>Divisional 2</label><select id="div2"></select></div><div><label>Divisional 3</label><select id="div3"></select></div><div><label>Divisional 4</label><select id="div4"></select></div>
+<div class="full"><h3>Finales de conferencia</h3></div>
+<div><label>Final AFC</label><select id="conf1"></select></div>
+<div><label>Final NFC</label><select id="conf2"></select></div>
+<div class="full"><h3>Super Bowl</h3></div>
+<div class="full"><label>Campeón previsto</label><select id="sbChamp"></select></div>
+<div class="full"><button id="saveBracketBtn">Cerrar cuadro completo</button></div>
+</div></div>
+<div class="card"><h2>Mi cuadro</h2><div id="myBracket"></div></div>
+</section>
+
+<section id="history" class="hidden">
+<div class="card"><h2>Historial de elecciones</h2><div id="historyTable"></div></div>
+<div class="card"><h2>Cuadros de Playoffs</h2><div id="bracketHistory"></div></div>
+</section>
+
+<section id="account" class="hidden">
+<div class="card"><h2>Cuenta</h2><div id="accountInfo"></div></div>
+<div class="card hidden" id="adminCard"><h2>Administración</h2>
+<div class="grid">
+<div><label>Nueva temporada</label><input id="newSeason" placeholder="2027"></div>
+<div><label>Cierre Playoffs</label><input id="playoffLockAt" type="datetime-local"></div>
+<div class="full"><button id="createSeasonBtn">Crear temporada y añadir jugadores actuales</button></div>
+</div>
+<p class="notice">Los resultados solo los puede modificar un administrador.</p>
+</div>
+</section>
+</section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const nflTeams=["Arizona Cardinals", "Atlanta Falcons", "Baltimore Ravens", "Buffalo Bills", "Carolina Panthers", "Chicago Bears", "Cincinnati Bengals", "Cleveland Browns", "Dallas Cowboys", "Denver Broncos", "Detroit Lions", "Green Bay Packers", "Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Kansas City Chiefs", "Las Vegas Raiders", "Los Angeles Chargers", "Los Angeles Rams", "Miami Dolphins", "Minnesota Vikings", "New England Patriots", "New Orleans Saints", "New York Giants", "New York Jets", "Philadelphia Eagles", "Pittsburgh Steelers", "San Francisco 49ers", "Seattle Seahawks", "Tampa Bay Buccaneers", "Tennessee Titans", "Washington Commanders"];
+const slots=[
+["wc1","wild"],["wc2","wild"],["wc3","wild"],["wc4","wild"],["wc5","wild"],["wc6","wild"],
+["div1","div"],["div2","div"],["div3","div"],["div4","div"],
+["conf1","conf"],["conf2","conf"],["sbChamp","sb"]
+];
+const pts={wild:-1,div:-2,conf:-3,sb:-4};
+const $=id=>document.getElementById(id);
+let sb=null,session=null,profile=null,seasons=[],currentSeason=null,profiles=[],picks=[],brackets=[];
+
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function nameOf(uid){return profiles.find(p=>p.id===uid)?.display_name||"Jugador"}
+function isAdmin(){return profile?.role==="admin"}
+function alertError(e){console.error(e);alert(e?.message||String(e))}
+
+function openTab(name){
+  const ids=["pick","results","standings","playoffs","history","account"];
+  ids.forEach(id=>$(id).classList.toggle("hidden",id!==name));
+  document.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("secondary",b.dataset.tab!==name));
+  window.scrollTo(0,0);
+}
+
+function fillTeams(el,disabledUsed=false){
+  const keep=el.value;
+  el.innerHTML='<option value="">Selecciona un equipo</option>';
+  const used=new Set(disabledUsed?picks.filter(x=>x.user_id===session.user.id).map(x=>x.team):[]);
+  nflTeams.forEach(t=>{
+    const o=document.createElement("option");o.value=t;o.textContent=used.has(t)?t+" (USADO)":t;o.disabled=used.has(t);el.appendChild(o);
+  });
+  if([...el.options].some(o=>o.value===keep&&!o.disabled))el.value=keep;
+}
+
+async function init(){
+  if(!window.NFL_CONFIG||NFL_CONFIG.SUPABASE_URL.includes("TU-PROYECTO")){
+    alert("Falta configurar config.js con la URL y la publishable/anon key de Supabase.");
+    return;
+  }
+  sb=window.supabase.createClient(NFL_CONFIG.SUPABASE_URL,NFL_CONFIG.SUPABASE_KEY);
+  for(let i=1;i<=18;i++)$("week").innerHTML+=`<option value="${i}">${i}</option>`;
+  slots.forEach(([id])=>fillTeams($(id)));
+  bindEvents();
+  const {data}=await sb.auth.getSession();
+  session=data.session;
+  if(session)await enterApp(); else showLogin();
+  sb.auth.onAuthStateChange(async(_event,s)=>{session=s;if(s)await enterApp();else showLogin()});
+}
+
+function bindEvents(){
+  document.addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b){e.preventDefault();openTab(b.dataset.tab)}});
+  $("loginBtn").onclick=login;$("signupBtn").onclick=signup;$("logoutBtn").onclick=()=>sb.auth.signOut();
+  $("seasonSelect").onchange=async()=>{currentSeason=seasons.find(s=>s.id===$("seasonSelect").value);await loadData()};
+  $("savePickBtn").onclick=savePick;$("waBtn").onclick=shareWhatsApp;$("saveBracketBtn").onclick=saveBracket;
+  $("createSeasonBtn").onclick=createSeason;$("themeBtn").onclick=toggleTheme;
+}
+
+async function login(){
+  const email=$("loginEmail").value.trim(),password=$("loginPassword").value;
+  const {error}=await sb.auth.signInWithPassword({email,password});if(error)alertError(error);
+}
+async function signup(){
+  const display_name=$("signupName").value.trim(),email=$("signupEmail").value.trim(),password=$("signupPassword").value;
+  if(!display_name||!email||!password)return alert("Completa nombre, email y contraseña.");
+  const {error}=await sb.auth.signUp({email,password,options:{data:{display_name}}});if(error)alertError(error);else alert("Cuenta creada. Si tienes confirmación de email activada, revisa tu correo.");
+}
+function showLogin(){$("loginView").classList.remove("hidden");$("appView").classList.add("hidden");$("logoutBtn").classList.add("hidden")}
+async function enterApp(){
+  const {data,error}=await sb.from("profiles").select("*").eq("id",session.user.id).single();if(error)return alertError(error);
+  profile=data;$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden");
+  $("adminCard").classList.toggle("hidden",!isAdmin());
+  await loadSeasons();openTab("pick");
+}
+async function loadSeasons(){
+  const {data,error}=await sb.from("seasons").select("*").order("created_at",{ascending:false});if(error)return alertError(error);
+  seasons=data||[];currentSeason=seasons.find(s=>s.active)||seasons[0]||null;
+  $("seasonSelect").innerHTML=seasons.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+  if(currentSeason)$("seasonSelect").value=currentSeason.id;
+  await loadData();
+}
+async function loadData(){
+  if(!currentSeason)return;
+  const [p1,p2,p3]=await Promise.all([
+    sb.from("profiles").select("id,display_name,role").order("display_name"),
+    sb.from("regular_picks").select("*").eq("season_id",currentSeason.id).order("created_at"),
+    sb.from("playoff_brackets").select("*").eq("season_id",currentSeason.id).order("created_at")
+  ]);
+  if(p1.error||p2.error||p3.error)return alertError(p1.error||p2.error||p3.error);
+  profiles=p1.data||[];picks=p2.data||[];brackets=p3.data||[];
+  fillTeams($("team"),true);renderAll();
+}
+async function savePick(){
+  const week=+$("week").value,team=$("team").value;if(!team)return alert("Selecciona un equipo.");
+  const {error}=await sb.from("regular_picks").insert({season_id:currentSeason.id,week,user_id:session.user.id,team});
+  if(error)return alertError(error);await loadData();
+}
+async function setRegularResult(id,result){
+  const {error}=await sb.from("regular_picks").update({result,resolved_at:new Date().toISOString()}).eq("id",id);
+  if(error)return alertError(error);await loadData();
+}
+async function saveBracket(){
+  if(brackets.some(b=>b.user_id===session.user.id))return alert("Ya tienes un cuadro cerrado.");
+  const picksObj={};
+  for(const [id] of slots){if(!$(id).value)return alert("Debes completar los 13 pronósticos.");picksObj[id]=$(id).value}
+  const {error}=await sb.from("playoff_brackets").insert({season_id:currentSeason.id,user_id:session.user.id,picks:picksObj});
+  if(error)return alertError(error);await loadData();
+}
+async function setBracketResult(id,slot,result){
+  const b=brackets.find(x=>x.id===id);const r={...(b.results||{}),[slot]:result};
+  const {error}=await sb.from("playoff_brackets").update({results:r}).eq("id",id);if(error)return alertError(error);await loadData();
+}
+async function setChampionOut(id,val){
+  const {error}=await sb.from("playoff_brackets").update({champion_first_game_out:val}).eq("id",id);if(error)return alertError(error);await loadData();
+}
+function regScore(uid){return picks.filter(x=>x.user_id===uid&&x.result==="loss").reduce((a,x)=>a+(19-x.week),0)}
+function poScore(uid){
+  const b=brackets.find(x=>x.user_id===uid);if(!b)return 0;let n=0;
+  slots.forEach(([id,round])=>{if(b.results?.[id]==="win")n+=pts[round]});
+  if(b.champion_first_game_out==="yes")n+=5;return n;
+}
+function renderAll(){
+  $("subtitle").textContent=`${currentSeason?.name||""} · ${profile.display_name}`;
+  $("accountInfo").innerHTML=`<b>${esc(profile.display_name)}</b><br>${esc(session.user.email)}<br><span class="badge">${profile.role}</span>`;
+  renderLast();renderResults();renderStandings();renderHistory();renderBracket();
+  const lock=currentSeason.playoff_lock_at?new Date(currentSeason.playoff_lock_at):null;
+  $("playoffLockInfo").textContent=lock?`Cierre del cuadro: ${lock.toLocaleString()}`:"El administrador aún no ha fijado hora de cierre.";
+  $("saveBracketBtn").disabled=brackets.some(b=>b.user_id===session.user.id)||(lock&&Date.now()>=lock.getTime());
+}
+function renderLast(){
+  const x=[...picks].filter(p=>p.user_id===session.user.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
+  $("lastPick").innerHTML=x?`<b>Jornada ${x.week} · ${esc(x.team)}</b><br><span class="muted">${new Date(x.created_at).toLocaleString()}</span>`:"Sin elecciones.";
+}
+function renderResults(){
+  $("regularResults").innerHTML=picks.length?`<table><tr><th>J</th><th>Jugador</th><th>Equipo</th><th>Estado</th>${isAdmin()?"<th>Acción</th>":""}</tr>${picks.map(x=>`<tr><td>${x.week}</td><td>${esc(nameOf(x.user_id))}</td><td>${esc(x.team)}</td><td>${x.result==="win"?"Victoria":x.result==="loss"?"Derrota":"Pendiente"}</td>${isAdmin()?`<td><div class="actions"><button onclick="setRegularResult('${x.id}','win')">Victoria</button><button class="danger" onclick="setRegularResult('${x.id}','loss')">Derrota</button><button class="secondary" onclick="setRegularResult('${x.id}','pending')">Pendiente</button></div></td>`:""}</tr>`).join("")}</table>`:"Sin elecciones.";
+  $("playoffResults").innerHTML=brackets.length?brackets.map(b=>`<div class="card" style="box-shadow:none"><b>${esc(nameOf(b.user_id))}</b> · campeón: ${esc(b.picks.sbChamp)}${slots.map(([id])=>`<div style="margin-top:8px">${id}: ${esc(b.picks[id])} — ${b.results?.[id]||"pending"}${isAdmin()?` <span class="actions"><button onclick="setBracketResult('${b.id}','${id}','win')">Acierto</button><button class="danger" onclick="setBracketResult('${b.id}','${id}','loss')">Fallo</button></span>`:""}</div>`).join("")}${isAdmin()?`<p><b>¿Campeón eliminado en su primer partido?</b></p><div class="actions"><button onclick="setChampionOut('${b.id}','no')">No</button><button class="danger" onclick="setChampionOut('${b.id}','yes')">Sí (+5)</button><button class="secondary" onclick="setChampionOut('${b.id}','pending')">Pendiente</button></div>`:""}</div>`).join(""):"Sin cuadros cerrados.";
+}
+function renderStandings(){
+  const ids=[...new Set([...profiles.map(p=>p.id),...picks.map(p=>p.user_id),...brackets.map(b=>b.user_id)])];
+  const rows=ids.map(uid=>{const r=regScore(uid),p=poScore(uid);return {uid,r,p,total:r+p}}).sort((a,b)=>a.total-b.total);
+  $("standingsTable").innerHTML=`<table><tr><th>#</th><th>Jugador</th><th>Regular</th><th>Playoffs</th><th>Total</th></tr>${rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(nameOf(x.uid))}</td><td>${x.r}</td><td>${x.p>0?"+":""}${x.p}</td><td><b>${x.total}</b></td></tr>`).join("")}</table>`;
+}
+function renderHistory(){
+  $("historyTable").innerHTML=picks.length?`<table><tr><th>J</th><th>Jugador</th><th>Equipo</th><th>Hora servidor</th></tr>${picks.map(x=>`<tr><td>${x.week}</td><td>${esc(nameOf(x.user_id))}</td><td>${esc(x.team)}</td><td>${new Date(x.created_at).toLocaleString()}</td></tr>`).join("")}</table>`:"Sin elecciones.";
+  $("bracketHistory").innerHTML=brackets.length?`<table><tr><th>Jugador</th><th>Campeón</th><th>Cerrado</th></tr>${brackets.map(b=>`<tr><td>${esc(nameOf(b.user_id))}</td><td>${esc(b.picks.sbChamp)}</td><td>${new Date(b.created_at).toLocaleString()}</td></tr>`).join("")}</table>`:"Sin cuadros.";
+}
+function renderBracket(){
+  const b=brackets.find(x=>x.user_id===session.user.id);
+  $("myBracket").innerHTML=b?`<b>Cuadro cerrado ${new Date(b.created_at).toLocaleString()}</b><br>${slots.map(([id])=>`${id}: ${esc(b.picks[id])}`).join("<br>")}`:"Aún no has cerrado tu cuadro.";
+}
+function shareWhatsApp(){
+  const x=[...picks].filter(p=>p.user_id===session.user.id).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
+  if(!x)return alert("No hay elecciones.");
+  const txt=`NFL SURVIVOR - ${currentSeason.name}\nJornada ${x.week}\n${profile.display_name}: ${x.team}\nPetición registrada: ${new Date(x.created_at).toLocaleString()}`;
+  window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank");
+}
+async function createSeason(){
+  if(!isAdmin())return;
+  const name=$("newSeason").value.trim(),local=$("playoffLockAt").value;if(!name)return alert("Escribe el nombre de temporada.");
+  await sb.from("seasons").update({active:false}).eq("active",true);
+  const payload={name,active:true,playoff_lock_at:local?new Date(local).toISOString():null};
+  const {data,error}=await sb.from("seasons").insert(payload).select().single();if(error)return alertError(error);
+  const members=profiles.map(p=>({season_id:data.id,user_id:p.id}));
+  if(members.length){const m=await sb.from("season_members").insert(members);if(m.error)return alertError(m.error)}
+  $("newSeason").value="";$("playoffLockAt").value="";await loadSeasons();
+}
+function toggleTheme(){
+  const cur=document.documentElement.dataset.theme,sys=matchMedia("(prefers-color-scheme:dark)").matches;
+  const next=cur==="dark"?"light":cur==="light"?"dark":(sys?"light":"dark");
+  document.documentElement.dataset.theme=next;localStorage.setItem("nflTheme",next);updateThemeBtn();
+}
+function updateThemeBtn(){
+  const cur=document.documentElement.dataset.theme,sys=matchMedia("(prefers-color-scheme:dark)").matches;
+  $("themeBtn").textContent=(cur==="dark"||(!cur&&sys))?"Modo claro":"Modo oscuro";
+}
+const savedTheme=localStorage.getItem("nflTheme");if(savedTheme)document.documentElement.dataset.theme=savedTheme;updateThemeBtn();
+init();
+</script>
+</body>
+</html>
