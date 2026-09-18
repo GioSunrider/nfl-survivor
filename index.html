@@ -72,7 +72,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
   .history-filter-reset{grid-column:auto}
 }
 
-.league-rules details{border-top:1px solid var(--line);padding:10px 0}.league-rules details:first-of-type{border-top:0}.league-rules summary{cursor:pointer;padding:4px 0}.league-rules ul{margin:10px 0 2px;padding-left:22px}.league-rules li{margin:7px 0;line-height:1.45}.hidden-pick{font-weight:700;color:var(--muted);white-space:nowrap}.privacy-note{margin:8px 0 14px;font-size:13px}</style>
+.league-rules details{border-top:1px solid var(--line);padding:10px 0}.league-rules details:first-of-type{border-top:0}.league-rules summary{cursor:pointer;padding:4px 0}.league-rules ul{margin:10px 0 2px;padding-left:22px}.league-rules li{margin:7px 0;line-height:1.45}.hidden-pick{font-weight:700;color:var(--muted);white-space:nowrap}.privacy-note{margin:8px 0 14px;font-size:13px}.auth-links{text-align:center}.link-btn{background:transparent!important;border:0!important;color:var(--accent)!important;text-decoration:underline;padding:8px!important;min-height:44px;box-shadow:none!important}.link-btn:hover{opacity:.8}</style>
 </head>
 <body>
 <header><div class="wrap head">
@@ -88,6 +88,16 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
 <div class="full"><label>Email</label><input id="loginEmail" type="email" autocomplete="email"></div>
 <div class="full"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
 <div class="full"><button id="loginBtn">Entrar</button></div>
+<div class="full auth-links"><button class="link-btn" id="forgotPasswordBtn" type="button">He olvidado la contraseña</button></div>
+</div>
+</div>
+<div class="card hidden" id="resetPasswordCard">
+<h2>Nueva contraseña</h2>
+<p class="muted">Escribe una nueva contraseña para recuperar el acceso a tu cuenta.</p>
+<div class="grid">
+<div class="full"><label>Nueva contraseña</label><input id="newPassword" type="password" autocomplete="new-password" minlength="6"></div>
+<div class="full"><label>Repetir contraseña</label><input id="newPassword2" type="password" autocomplete="new-password" minlength="6"></div>
+<div class="full"><button id="saveNewPasswordBtn" type="button">Guardar nueva contraseña</button></div>
 </div>
 </div>
 <div class="card">
@@ -228,6 +238,7 @@ function fillTeams(el,disabledUsed=false){
 function bindEvents(){
   document.addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b){e.preventDefault();openTab(b.dataset.tab)}});
   $("loginBtn").onclick=login;$("signupBtn").onclick=signup;$("logoutBtn").onclick=()=>sb.auth.signOut();
+  $("forgotPasswordBtn").onclick=forgotPassword;$("saveNewPasswordBtn").onclick=saveNewPassword;
   $("seasonSelect").onchange=async()=>{currentSeason=seasons.find(s=>s.id===$("seasonSelect").value);await loadData()};
   $("week").onchange=()=>fillTeams($("team"),true);
   $("savePickBtn").onclick=savePick;$("waBtn").onclick=shareWhatsApp;$("saveBracketBtn").onclick=saveBracket;
@@ -237,6 +248,24 @@ function bindEvents(){
   $("historyResetBtn").onclick=()=>{$("historyPlayerFilter").value="";$("historyWeekFilter").value="";renderHistory()};
 }
 
+async function forgotPassword(){
+  const email=$("loginEmail").value.trim();
+  if(!email)return alert("Escribe primero tu email en el campo de acceso.");
+  const redirectTo=location.origin+location.pathname;
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
+  if(error)return alertError(error);
+  alert("Te hemos enviado un correo para restablecer la contraseña. Revisa también Spam/Correo no deseado.");
+}
+async function saveNewPassword(){
+  const p1=$("newPassword").value,p2=$("newPassword2").value;
+  if(p1.length<6)return alert("La contraseña debe tener al menos 6 caracteres.");
+  if(p1!==p2)return alert("Las contraseñas no coinciden.");
+  const {error}=await sb.auth.updateUser({password:p1});
+  if(error)return alertError(error);
+  $("resetPasswordCard").classList.add("hidden");
+  $("newPassword").value=$("newPassword2").value="";
+  alert("Contraseña actualizada. Ya puedes entrar con la nueva contraseña.");
+}
 async function login(){
   const email=$("loginEmail").value.trim(),password=$("loginPassword").value;
   const {error}=await sb.auth.signInWithPassword({email,password});if(error)alertError(error);
