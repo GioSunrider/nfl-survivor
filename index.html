@@ -72,7 +72,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
   .history-filter-reset{grid-column:auto}
 }
 
-.league-rules details{border-top:1px solid var(--line);padding:10px 0}.league-rules details:first-of-type{border-top:0}.league-rules summary{cursor:pointer;padding:4px 0}.league-rules ul{margin:10px 0 2px;padding-left:22px}.league-rules li{margin:7px 0;line-height:1.45}.hidden-pick{font-weight:700;color:var(--muted);white-space:nowrap}.privacy-note{margin:8px 0 14px;font-size:13px}.auth-links{text-align:center}.link-btn{background:transparent!important;border:0!important;color:var(--accent)!important;text-decoration:underline;padding:8px!important;box-shadow:none!important}.register-dropdown>summary{cursor:pointer;padding:4px 0 12px}</style>
+.league-rules details{border-top:1px solid var(--line);padding:10px 0}.league-rules details:first-of-type{border-top:0}.league-rules summary{cursor:pointer;padding:4px 0}.league-rules ul{margin:10px 0 2px;padding-left:22px}.league-rules li{margin:7px 0;line-height:1.45}.hidden-pick{font-weight:700;color:var(--muted);white-space:nowrap}.privacy-note{margin:8px 0 14px;font-size:13px}.auth-links{text-align:center}.link-btn{background:transparent!important;border:0!important;color:var(--accent)!important;text-decoration:underline;padding:8px!important;box-shadow:none!important}.register-dropdown>summary{cursor:pointer;padding:4px 0 12px}.login-status{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px}.login-status.login-bad{border-color:var(--bad);color:var(--bad)}</style>
 </head>
 <body>
 <header><div class="wrap head">
@@ -88,6 +88,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
 <div class="full"><label>Email</label><input id="loginEmail" type="email" autocomplete="email"></div>
 <div class="full"><label>Contraseña</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
 <div class="full"><button id="loginBtn">Entrar</button></div>
+<div class="full"><div id="loginStatus" class="login-status hidden" role="status"></div></div>
 <div class="full auth-links"><button class="link-btn" id="forgotPasswordBtn" type="button">He olvidado la contraseña</button></div>
 </div>
 </div>
@@ -257,7 +258,7 @@ async function init(){
       setTimeout(()=>$("newPassword")?.focus(),50);
       return;
     }
-    if(s)setTimeout(()=>enterApp(),0);else showLogin();
+    if(event==="SIGNED_OUT"){profile=null;showLogin();}
   });
 }
 
@@ -292,7 +293,30 @@ async function saveNewPassword(){
 }
 async function login(){
   const email=$("loginEmail").value.trim(),password=$("loginPassword").value;
-  const {error}=await sb.auth.signInWithPassword({email,password});if(error)alertError(error);
+  const status=$("loginStatus");
+  const showStatus=(msg,bad=false)=>{status.textContent=msg;status.classList.remove("hidden");status.classList.toggle("login-bad",bad)};
+  if(!email||!password)return showStatus("Introduce email y contraseña.",true);
+  $("loginBtn").disabled=true;$("loginBtn").textContent="Entrando…";
+  showStatus("Comprobando cuenta…");
+  try{
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error){
+      console.error("AUTH LOGIN:",error);
+      if(error.code==="invalid_credentials")showStatus("Email o contraseña incorrectos. Si la contraseña era correcta antes, usa «He olvidado la contraseña».",true);
+      else if(error.code==="email_not_confirmed")showStatus("El usuario existe, pero Supabase indica que el email no está confirmado.",true);
+      else showStatus(`Supabase Auth: ${error.message||error.code||"error de acceso"}`,true);
+      return;
+    }
+    session=data?.session||null;
+    if(!session)return showStatus("Supabase aceptó el acceso pero no devolvió una sesión. Recarga la página y prueba de nuevo.",true);
+    showStatus("Acceso correcto. Cargando liga…");
+    await enterApp();
+  }catch(err){
+    console.error("LOGIN FLOW:",err);
+    showStatus(`Error cargando la liga: ${err?.message||err}`,true);
+  }finally{
+    $("loginBtn").disabled=false;$("loginBtn").textContent="Entrar";
+  }
 }
 async function signup(){
   const display_name=$("signupName").value.trim(),email=$("signupEmail").value.trim(),password=$("signupPassword").value;
@@ -301,8 +325,19 @@ async function signup(){
 }
 function showLogin(){$("loginView").classList.remove("hidden");$("appView").classList.add("hidden");$("logoutBtn").classList.add("hidden")}
 async function enterApp(){
-  const {data,error}=await sb.from("profiles").select("*").eq("id",session.user.id).single();if(error)return alertError(error);
-  profile=data;$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden");
+  if(!session?.user?.id){showLogin();return}
+  const {data,error}=await sb.from("profiles").select("*").eq("id",session.user.id).maybeSingle();
+  if(error){
+    console.error("PROFILE LOAD:",error);
+    const st=$("loginStatus");if(st){st.textContent=`La cuenta ha iniciado sesión, pero no se puede cargar el perfil: ${error.message}`;st.classList.remove("hidden");st.classList.add("login-bad")}
+    showLogin();return;
+  }
+  if(!data){
+    const st=$("loginStatus");if(st){st.textContent="La cuenta existe en Supabase Auth, pero falta su perfil en la tabla profiles. No crees otra cuenta: hay que reparar ese perfil.";st.classList.remove("hidden");st.classList.add("login-bad")}
+    showLogin();return;
+  }
+  profile=data;
+  $("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("logoutBtn").classList.remove("hidden");
   $("adminCard").classList.toggle("hidden",!isAdmin());
   await loadSeasons();openTab("pick");
 }
