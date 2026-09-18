@@ -231,7 +231,7 @@ function fillTeams(el,disabledUsed=false){
     const selectedWeek=Number($("week")?.value);
     used=new Set(picks.filter(x=>x.user_id===session.user.id&&Number(x.week)!==selectedWeek).map(x=>x.team.toLowerCase()));
   }
-  el.innerHTML='<option value="">Selecciona...</option>'+teams.map(t=>`<option value="${esc(t)}" ${used.has(t.toLowerCase())?"disabled":""}>${esc(t)}${used.has(t.toLowerCase())?" (USADO)":""}</option>`).join("");
+  el.innerHTML='<option value="">Selecciona...</option>'+nflTeams.map(t=>`<option value="${esc(t)}" ${used.has(t.toLowerCase())?"disabled":""}>${esc(t)}${used.has(t.toLowerCase())?" (USADO)":""}</option>`).join("");
   const existing=disabledUsed?picks.find(x=>x.user_id===session.user.id&&Number(x.week)===Number($("week")?.value)&&x.result==="pending"):null;
   if(existing&&!used.has(existing.team.toLowerCase()))el.value=existing.team;
   else if([...el.options].some(o=>o.value===old&&!o.disabled))el.value=old;
