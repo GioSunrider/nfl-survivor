@@ -38,6 +38,26 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
   .week-group summary{padding:12px}
 }
 
+
+.result-summary{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.result-pick{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 2px;border-bottom:1px solid var(--line)}
+.result-pick:last-child{border-bottom:0}
+.result-pick.pending-result{border-left:3px solid var(--muted);padding-left:9px}
+.result-player{min-width:180px}
+.result-controls{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.result-actions{justify-content:flex-end}
+.result-actions button{min-width:82px}
+.badge.ok{color:var(--ok)}
+.badge.bad{color:var(--bad)}
+@media(max-width:600px){
+  .result-summary{justify-content:flex-end}
+  .result-pick{align-items:flex-start;flex-direction:column}
+  .result-player{min-width:0;width:100%}
+  .result-controls{width:100%;align-items:stretch;flex-direction:column}
+  .result-actions{display:grid;grid-template-columns:1fr 1fr 1fr;width:100%}
+  .result-actions button{width:100%;min-width:0;padding:10px 5px}
+}
+
 </style>
 </head>
 <body>
@@ -290,7 +310,45 @@ function renderLast(){
   $("lastPick").innerHTML=x?`<b>Jornada ${x.week} · ${esc(x.team)}</b><br><span class="muted">${new Date(x.created_at).toLocaleString()}</span>`:"Sin elecciones.";
 }
 function renderResults(){
-  $("regularResults").innerHTML=picks.length?`<table><tr><th>J</th><th>Jugador</th><th>Equipo</th><th>Estado</th>${isAdmin()?"<th>Acción</th>":""}</tr>${picks.map(x=>`<tr><td>${x.week}</td><td>${esc(nameOf(x.user_id))}</td><td>${esc(x.team)}</td><td>${x.result==="win"?"Victoria":x.result==="loss"?"Derrota":"Pendiente"}</td>${isAdmin()?`<td><div class="actions"><button onclick="setRegularResult('${x.id}','win')">Victoria</button><button class="danger" onclick="setRegularResult('${x.id}','loss')">Derrota</button><button class="secondary" onclick="setRegularResult('${x.id}','pending')">Pendiente</button></div></td>`:""}</tr>`).join("")}</table>`:"Sin elecciones.";
+  if(!picks.length){
+    $("regularResults").innerHTML='<div class="muted">Sin elecciones.</div>';
+  }else{
+    const byWeek={};
+    picks.forEach(x=>(byWeek[x.week]??=[]).push(x));
+    const weeks=Object.keys(byWeek).map(Number).sort((a,b)=>b-a);
+    $("regularResults").innerHTML=weeks.map((week,index)=>{
+      const rows=byWeek[week].sort((a,b)=>nameOf(a.user_id).localeCompare(nameOf(b.user_id),"es"));
+      const pending=rows.filter(x=>x.result==="pending").length;
+      return `<details class="week-group result-week" ${index===0?"open":""}>
+        <summary>
+          <span><b>Jornada ${week}</b></span>
+          <span class="result-summary">
+            ${pending?`<span class="badge">${pending} pendiente${pending===1?"":"s"}</span>`:`<span class="badge ok">Completa</span>`}
+            <span class="badge">${rows.length} ${rows.length===1?"elección":"elecciones"}</span>
+          </span>
+        </summary>
+        <div class="week-picks">
+          ${rows.map(x=>`<div class="result-pick ${x.result==="pending"?"pending-result":""}">
+            <div class="result-player">
+              <b>${esc(nameOf(x.user_id))}</b>
+              <div class="history-team">${esc(x.team)}</div>
+            </div>
+            <div class="result-controls">
+              <span class="badge ${x.result==="win"?"ok":x.result==="loss"?"bad":""}">
+                ${x.result==="win"?"Victoria":x.result==="loss"?"Derrota":"Pendiente"}
+              </span>
+              ${isAdmin()?`<div class="actions result-actions">
+                <button ${x.result==="win"?"disabled":""} onclick="setRegularResult('${x.id}','win')">Victoria</button>
+                <button class="danger" ${x.result==="loss"?"disabled":""} onclick="setRegularResult('${x.id}','loss')">Derrota</button>
+                <button class="secondary" ${x.result==="pending"?"disabled":""} onclick="setRegularResult('${x.id}','pending')">Pendiente</button>
+              </div>`:""}
+            </div>
+          </div>`).join("")}
+        </div>
+      </details>`;
+    }).join("");
+  }
+
   $("playoffResults").innerHTML=brackets.length?brackets.map(b=>`<div class="card" style="box-shadow:none"><b>${esc(nameOf(b.user_id))}</b> · campeón: ${esc(b.picks.sbChamp)}${slots.map(([id])=>`<div style="margin-top:8px">${id}: ${esc(b.picks[id])} — ${b.results?.[id]||"pending"}${isAdmin()?` <span class="actions"><button onclick="setBracketResult('${b.id}','${id}','win')">Acierto</button><button class="danger" onclick="setBracketResult('${b.id}','${id}','loss')">Fallo</button></span>`:""}</div>`).join("")}${isAdmin()?`<p><b>¿Campeón eliminado en su primer partido?</b></p><div class="actions"><button onclick="setChampionOut('${b.id}','no')">No</button><button class="danger" onclick="setChampionOut('${b.id}','yes')">Sí (+5)</button><button class="secondary" onclick="setChampionOut('${b.id}','pending')">Pendiente</button></div>`:""}</div>`).join(""):"Sin cuadros cerrados.";
 }
 function renderStandings(){
