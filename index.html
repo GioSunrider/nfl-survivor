@@ -72,7 +72,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
   .history-filter-reset{grid-column:auto}
 }
 
-.league-rules details{border-top:1px solid var(--line);padding:10px 0}.league-rules details:first-of-type{border-top:0}.league-rules summary{cursor:pointer;padding:4px 0}.league-rules ul{margin:10px 0 2px;padding-left:22px}.league-rules li{margin:7px 0;line-height:1.45}.hidden-pick{font-weight:700;color:var(--muted);white-space:nowrap}.privacy-note{margin:8px 0 14px;font-size:13px}.auth-links{text-align:center}.link-btn{background:transparent!important;border:0!important;color:var(--accent)!important;text-decoration:underline;padding:8px!important;min-height:44px;box-shadow:none!important}.link-btn:hover{opacity:.8}</style>
+.league-rules details{border-top:1px solid var(--line);padding:10px 0}.league-rules details:first-of-type{border-top:0}.league-rules summary{cursor:pointer;padding:4px 0}.league-rules ul{margin:10px 0 2px;padding-left:22px}.league-rules li{margin:7px 0;line-height:1.45}.hidden-pick{font-weight:700;color:var(--muted);white-space:nowrap}.privacy-note{margin:8px 0 14px;font-size:13px}.auth-links{text-align:center}.link-btn{background:transparent!important;border:0!important;color:var(--accent)!important;text-decoration:underline;padding:8px!important;min-height:44px;box-shadow:none!important}.link-btn:hover{opacity:.8}.register-dropdown{padding:0}.register-dropdown>summary{cursor:pointer;padding:18px 20px;list-style-position:inside}.register-dropdown[open]>summary{border-bottom:1px solid var(--line)}.register-dropdown .register-grid,.register-dropdown>p{margin:16px 20px}.register-dropdown .register-grid{margin-bottom:20px}</style>
 </head>
 <body>
 <header><div class="wrap head">
@@ -100,16 +100,16 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
 <div class="full"><button id="saveNewPasswordBtn" type="button">Guardar nueva contraseña</button></div>
 </div>
 </div>
-<div class="card">
-<h2>Crear cuenta</h2>
-<p class="muted">Cada jugador crea una cuenta una sola vez.</p>
-<div class="grid">
-<div class="full"><label>Nombre visible</label><input id="signupName"></div>
-<div class="full"><label>Email</label><input id="signupEmail" type="email"></div>
-<div class="full"><label>Contraseña</label><input id="signupPassword" type="password"></div>
+<details class="card register-dropdown">
+<summary><b>Crear una cuenta nueva</b></summary>
+<p class="muted">Solo para jugadores que todavía no tengan cuenta.</p>
+<div class="grid register-grid">
+<div class="full"><label>Nombre visible</label><input id="signupName" autocomplete="name"></div>
+<div class="full"><label>Email</label><input id="signupEmail" type="email" autocomplete="email"></div>
+<div class="full"><label>Contraseña</label><input id="signupPassword" type="password" autocomplete="new-password" minlength="6"></div>
 <div class="full"><button id="signupBtn">Crear cuenta</button></div>
 </div>
-</div>
+</details>
 </section>
 
 <section id="appView" class="hidden">
@@ -235,6 +235,42 @@ function fillTeams(el,disabledUsed=false){
   if(existing&&!used.has(existing.team.toLowerCase()))el.value=existing.team;
   else if([...el.options].some(o=>o.value===old&&!o.disabled))el.value=old;
 }
+async function init(){
+  const cfg=window.NFL_CONFIG||{};
+  if(!cfg.SUPABASE_URL||!cfg.SUPABASE_KEY){
+    alert("Falta configurar Supabase en config.js");
+    return;
+  }
+  sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_KEY,{
+    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+  });
+  bindEvents();
+
+  sb.auth.onAuthStateChange((event,newSession)=>{
+    session=newSession;
+    if(event==="PASSWORD_RECOVERY"){
+      showLogin();
+      $("resetPasswordCard").classList.remove("hidden");
+      setTimeout(()=>$("newPassword").focus(),50);
+      return;
+    }
+    if(event==="SIGNED_OUT"){
+      session=null;profile=null;showLogin();
+      return;
+    }
+    if(newSession){
+      setTimeout(()=>enterApp(),0);
+    }else{
+      showLogin();
+    }
+  });
+
+  const {data,error}=await sb.auth.getSession();
+  if(error)console.error("Error recuperando sesión:",error);
+  session=data?.session||null;
+  if(session) await enterApp(); else showLogin();
+}
+
 function bindEvents(){
   document.addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b){e.preventDefault();openTab(b.dataset.tab)}});
   $("loginBtn").onclick=login;$("signupBtn").onclick=signup;$("logoutBtn").onclick=()=>sb.auth.signOut();
@@ -268,7 +304,18 @@ async function saveNewPassword(){
 }
 async function login(){
   const email=$("loginEmail").value.trim(),password=$("loginPassword").value;
-  const {error}=await sb.auth.signInWithPassword({email,password});if(error)alertError(error);
+  if(!email||!password)return alert("Introduce email y contraseña.");
+  $("loginBtn").disabled=true;$("loginBtn").textContent="Entrando…";
+  const {data,error}=await sb.auth.signInWithPassword({email,password});
+  $("loginBtn").disabled=false;$("loginBtn").textContent="Entrar";
+  if(error){
+    console.error("Login Supabase:",error);
+    if(error.code==="email_not_confirmed")return alert("Tu correo todavía no está confirmado. Revisa el email de confirmación o pide al administrador que confirme el usuario en Supabase.");
+    if(error.code==="invalid_credentials")return alert("Email o contraseña incorrectos. Usa «He olvidado la contraseña» si no recuerdas la clave.");
+    return alertError(error);
+  }
+  session=data.session;
+  await enterApp();
 }
 async function signup(){
   const display_name=$("signupName").value.trim(),email=$("signupEmail").value.trim(),password=$("signupPassword").value;
