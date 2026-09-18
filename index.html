@@ -72,7 +72,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
   .history-filter-reset{grid-column:auto}
 }
 
-.league-rules details{border-top:1px solid var(--line);padding:10px 0}.league-rules details:first-of-type{border-top:0}.league-rules summary{cursor:pointer;padding:4px 0}.league-rules ul{margin:10px 0 2px;padding-left:22px}.league-rules li{margin:7px 0;line-height:1.45}</style>
+.league-rules details{border-top:1px solid var(--line);padding:10px 0}.league-rules details:first-of-type{border-top:0}.league-rules summary{cursor:pointer;padding:4px 0}.league-rules ul{margin:10px 0 2px;padding-left:22px}.league-rules li{margin:7px 0;line-height:1.45}.hidden-pick{font-weight:700;color:var(--muted);white-space:nowrap}.privacy-note{margin:8px 0 14px;font-size:13px}</style>
 </head>
 <body>
 <header><div class="wrap head">
@@ -153,7 +153,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
 </section>
 
 <section id="history" class="hidden">
-<div class="card"><h2>Historial de elecciones</h2>
+<div class="card"><h2>Historial de elecciones</h2><div class="notice privacy-note">🔒 Las elecciones pendientes de otros jugadores están ocultas. Se muestran cuando el resultado sea Victoria o Derrota.</div>
 <div class="history-filters">
   <div><label>Filtrar por jugador</label><select id="historyPlayerFilter"><option value="">Todos los jugadores</option></select></div>
   <div><label>Filtrar por jornada</label><select id="historyWeekFilter"><option value="">Todas las jornadas</option></select></div>
@@ -169,7 +169,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
 <div class="card league-rules"><h2>Normas de la liga</h2>
 <details open><summary><b>Temporada regular · 18 jornadas</b></summary><ul>
 <li>En cada jornada eliges un único equipo NFL que crees que ganará.</li><li>Cada equipo solo puede utilizarse una vez por jugador durante la temporada regular.</li>
-<li>Mientras el resultado esté <b>Pendiente</b>, puedes cambiar tu elección. Cuando se marque <b>Victoria</b> o <b>Derrota</b>, esa jornada queda cerrada.</li>
+<li>Mientras el resultado esté <b>Pendiente</b>, puedes cambiar tu elección. Cuando se marque <b>Victoria</b> o <b>Derrota</b>, esa jornada queda cerrada.</li><li>Las elecciones son <b>secretas mientras estén pendientes</b>. Cada jugador ve la suya y el administrador puede verlas para marcar resultados. Al resolverse, se hacen visibles para todos.</li>
 <li>La elección debe hacerse antes del kickoff del equipo elegido; la app conserva la hora de registro.</li><li>Victoria: <b>0</b>. Derrota: <b>19 − jornada</b> (+18 en J1 hasta +1 en J18). Un empate NFL cuenta como derrota.</li><li>Gana quien tenga la <b>menor puntuación</b>.</li>
 </ul></details>
 <details><summary><b>Playoffs</b></summary><ul><li>Antes de comenzar se cierra un cuadro completo de <b>13 pronósticos</b>: 6 Wild Card, 4 Divisionales, 2 Finales de Conferencia y campeón de la Super Bowl.</li><li>Aciertos: Wild Card <b>−1</b>, Divisional <b>−2</b>, Final de Conferencia <b>−3</b>, Super Bowl <b>−4</b>.</li><li>Los fallos normales no suman puntos.</li><li>Si el campeón pronosticado cae en su primer partido de Playoffs: <b>+5</b>.</li><li>En Playoffs pueden reutilizarse equipos de temporada regular.</li></ul></details>
@@ -199,6 +199,8 @@ const pts={wild:-1,div:-2,conf:-3,sb:-4};
 const $=id=>document.getElementById(id);
 let sb=null,session=null,profile=null,seasons=[],currentSeason=null,profiles=[],picks=[],brackets=[];
 
+function canSeePick(x){return isAdmin()||x.user_id===session.user.id||x.result==="win"||x.result==="loss"}
+function visibleTeam(x){return canSeePick(x)?esc(x.team):'<span class="hidden-pick">🔒 Elección oculta</span>'}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function nameOf(uid){return profiles.find(p=>p.id===uid)?.display_name||"Jugador"}
 function isAdmin(){return profile?.role==="admin"}
@@ -354,7 +356,7 @@ function renderResults(){
           ${rows.map(x=>`<div class="result-pick ${x.result==="pending"?"pending-result":""}">
             <div class="result-player">
               <b>${esc(nameOf(x.user_id))}</b>
-              <div class="history-team">${esc(x.team)}</div>
+              <div class="history-team">${visibleTeam(x)}</div>
             </div>
             <div class="result-controls">
               <span class="badge ${x.result==="win"?"ok":x.result==="loss"?"bad":""}">
@@ -430,7 +432,7 @@ function renderHistory(){
             ${rows.map(x=>`<div class="history-pick">
               <div>
                 <b>${esc(nameOf(x.user_id))}</b>
-                <div class="history-team">${esc(x.team)}</div>
+                <div class="history-team">${visibleTeam(x)}</div>
               </div>
               <div class="history-meta">
                 <span class="badge ${x.result==="win"?"ok":x.result==="loss"?"bad":""}">
