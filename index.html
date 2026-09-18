@@ -58,6 +58,20 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
   .result-actions button{width:100%;min-width:0;padding:10px 5px}
 }
 
+
+.history-filters{display:grid;grid-template-columns:1fr 1fr auto;gap:9px;align-items:end;margin-bottom:8px}
+.history-filter-reset button{white-space:nowrap}
+.history-filter-info{font-size:12px;margin:4px 0 12px}
+@media(max-width:600px){
+  .history-filters{grid-template-columns:1fr 1fr}
+  .history-filter-reset{grid-column:1/-1}
+  .history-filter-reset button{width:100%}
+}
+@media(max-width:420px){
+  .history-filters{grid-template-columns:1fr}
+  .history-filter-reset{grid-column:auto}
+}
+
 </style>
 </head>
 <body>
@@ -139,7 +153,14 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 5px;b
 </section>
 
 <section id="history" class="hidden">
-<div class="card"><h2>Historial de elecciones</h2><div id="historyTable"></div></div>
+<div class="card"><h2>Historial de elecciones</h2>
+<div class="history-filters">
+  <div><label>Filtrar por jugador</label><select id="historyPlayerFilter"><option value="">Todos los jugadores</option></select></div>
+  <div><label>Filtrar por jornada</label><select id="historyWeekFilter"><option value="">Todas las jornadas</option></select></div>
+  <div class="history-filter-reset"><button class="secondary" id="historyResetBtn">Quitar filtros</button></div>
+</div>
+<div id="historyFilterInfo" class="muted history-filter-info"></div>
+<div id="historyTable"></div></div>
 <div class="card"><h2>Cuadros de Playoffs</h2><div id="bracketHistory"></div></div>
 </section>
 
@@ -214,6 +235,9 @@ function bindEvents(){
   $("week").onchange=()=>fillTeams($("team"),true);
   $("savePickBtn").onclick=savePick;$("waBtn").onclick=shareWhatsApp;$("saveBracketBtn").onclick=saveBracket;
   $("createSeasonBtn").onclick=createSeason;$("themeBtn").onclick=toggleTheme;
+  $("historyPlayerFilter").onchange=renderHistory;
+  $("historyWeekFilter").onchange=renderHistory;
+  $("historyResetBtn").onclick=()=>{$("historyPlayerFilter").value="";$("historyWeekFilter").value="";renderHistory()};
 }
 
 async function login(){
@@ -357,16 +381,48 @@ function renderStandings(){
   $("standingsTable").innerHTML=`<table><tr><th>#</th><th>Jugador</th><th>Regular</th><th>Playoffs</th><th>Total</th></tr>${rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(nameOf(x.uid))}</td><td>${x.r}</td><td>${x.p>0?"+":""}${x.p}</td><td><b>${x.total}</b></td></tr>`).join("")}</table>`;
 }
 function renderHistory(){
-  if(!picks.length){
-    $("historyTable").innerHTML='<div class="muted">Sin elecciones.</div>';
+  const playerFilter=$("historyPlayerFilter");
+  const weekFilter=$("historyWeekFilter");
+
+  const currentPlayer=playerFilter.value;
+  const currentWeek=weekFilter.value;
+
+  const playerIds=[...new Set(picks.map(x=>x.user_id))]
+    .sort((a,b)=>nameOf(a).localeCompare(nameOf(b),"es"));
+  playerFilter.innerHTML='<option value="">Todos los jugadores</option>'+
+    playerIds.map(uid=>`<option value="${uid}">${esc(nameOf(uid))}</option>`).join("");
+  if(playerIds.includes(currentPlayer))playerFilter.value=currentPlayer;
+
+  const availableWeeks=[...new Set(picks.map(x=>Number(x.week)))].sort((a,b)=>a-b);
+  weekFilter.innerHTML='<option value="">Todas las jornadas</option>'+
+    availableWeeks.map(w=>`<option value="${w}">Jornada ${w}</option>`).join("");
+  if(availableWeeks.includes(Number(currentWeek))&&currentWeek!=="")weekFilter.value=currentWeek;
+
+  const selectedPlayer=playerFilter.value;
+  const selectedWeek=weekFilter.value;
+
+  const filtered=picks.filter(x=>
+    (!selectedPlayer||x.user_id===selectedPlayer) &&
+    (!selectedWeek||Number(x.week)===Number(selectedWeek))
+  );
+
+  const labels=[];
+  if(selectedPlayer)labels.push(nameOf(selectedPlayer));
+  if(selectedWeek)labels.push(`Jornada ${selectedWeek}`);
+  $("historyFilterInfo").textContent=labels.length
+    ? `${filtered.length} ${filtered.length===1?"elección":"elecciones"} · ${labels.join(" · ")}`
+    : `${picks.length} ${picks.length===1?"elección":"elecciones"} en el historial`;
+
+  if(!filtered.length){
+    $("historyTable").innerHTML='<div class="notice">No hay elecciones que coincidan con estos filtros.</div>';
   }else{
     const byWeek={};
-    picks.forEach(x=>(byWeek[x.week]??=[]).push(x));
-    $("historyTable").innerHTML=Object.keys(byWeek)
-      .map(Number).sort((a,b)=>b-a)
-      .map(week=>{
+    filtered.forEach(x=>(byWeek[x.week]??=[]).push(x));
+    const weekKeys=Object.keys(byWeek).map(Number).sort((a,b)=>b-a);
+    $("historyTable").innerHTML=weekKeys
+      .map((week,index)=>{
         const rows=byWeek[week].sort((a,b)=>nameOf(a.user_id).localeCompare(nameOf(b.user_id),"es"));
-        return `<details class="week-group" ${week===Math.max(...Object.keys(byWeek).map(Number))?"open":""}>
+        return `<details class="week-group" ${selectedWeek||index===0?"open":""}>
           <summary>
             <span><b>Jornada ${week}</b></span>
             <span class="badge">${rows.length} ${rows.length===1?"elección":"elecciones"}</span>
@@ -378,7 +434,9 @@ function renderHistory(){
                 <div class="history-team">${esc(x.team)}</div>
               </div>
               <div class="history-meta">
-                <span class="badge">${x.result==="win"?"Victoria":x.result==="loss"?"Derrota":"Pendiente"}</span>
+                <span class="badge ${x.result==="win"?"ok":x.result==="loss"?"bad":""}">
+                  ${x.result==="win"?"Victoria":x.result==="loss"?"Derrota":"Pendiente"}
+                </span>
                 <small>${new Date(x.created_at).toLocaleString()}</small>
               </div>
             </div>`).join("")}
